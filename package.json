@@ -1,7 +1,7 @@
 {
-  "name": "9router-app",
+  "name": "axyrouter-app",
   "version": "0.5.75",
-  "description": "9Router web dashboard",
+  "description": "AxyRouter web dashboard",
   "private": true,
   "scripts": {
     "dev": "next dev --port 20127",
