@@ -1,0 +1,55 @@
+name: Build and Deploy AxyRouter
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/axynera/axyrouter1
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  redeploy-koyeb:
+    needs: docker
+    runs-on: ubuntu-latest
+    if: ${{ secrets.KOYEB_TOKEN != '' && secrets.KOYEB_APP != '' && secrets.KOYEB_SERVICE != '' }}
+    steps:
+      - name: Install Koyeb CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
+          echo "$HOME/.koyeb/bin" >> "$GITHUB_PATH"
+
+      - name: Redeploy Koyeb service
+        env:
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+          KOYEB_APP: ${{ secrets.KOYEB_APP }}
+          KOYEB_SERVICE: ${{ secrets.KOYEB_SERVICE }}
+        run: |
+          koyeb services redeploy "$KOYEB_SERVICE" --app "$KOYEB_APP" --token "$KOYEB_TOKEN" --wait
