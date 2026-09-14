@@ -39,14 +39,30 @@ jobs:
   redeploy-koyeb:
     needs: docker
     runs-on: ubuntu-latest
-    if: ${{ secrets.KOYEB_TOKEN != '' && secrets.KOYEB_APP != '' && secrets.KOYEB_SERVICE != '' }}
     steps:
+      - name: Check Koyeb secrets
+        id: check-secrets
+        env:
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+          KOYEB_APP: ${{ secrets.KOYEB_APP }}
+          KOYEB_SERVICE: ${{ secrets.KOYEB_SERVICE }}
+        run: |
+          if [ -z "$KOYEB_TOKEN" ] || [ -z "$KOYEB_APP" ] || [ -z "$KOYEB_SERVICE" ]; then
+            echo "Koyeb secrets are not configured. Skipping Koyeb redeploy."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Koyeb secrets are configured."
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install Koyeb CLI
+        if: steps.check-secrets.outputs.configured == 'true'
         run: |
           curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
           echo "$HOME/.koyeb/bin" >> "$GITHUB_PATH"
 
       - name: Redeploy Koyeb service
+        if: steps.check-secrets.outputs.configured == 'true'
         env:
           KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
           KOYEB_APP: ${{ secrets.KOYEB_APP }}
