@@ -7,6 +7,10 @@ export const APP_CONFIG = {
   version: pkg.version,
 };
 
+// Master key: supplied by the deployment environment (for example Koyeb).
+// Never hard-code secrets in the repository.
+export const MASTER_KEY = process.env.MASTER_KEY || "";
+
 // GitHub configuration
 export const GITHUB_CONFIG = {
   changelogUrl: "https://raw.githubusercontent.com/decolua/9router/refs/heads/master/CHANGELOG.md",
@@ -59,10 +63,8 @@ export const CONSOLE_LOG_CONFIG = {
   pollIntervalMs: 1000,
 };
 
-// Client-side store TTL: how long fetched data stays fresh before re-fetching
 export const CLIENT_STORE_TTL_MS = 60000;
 
-// Quota auto-ping: keep 5h windows warm by sending a tiny request right after reset.
 export const QUOTA_AUTOPING_CONFIG = {
   tickIntervalMs: 60000,
   pingLeadMs: 5000,
